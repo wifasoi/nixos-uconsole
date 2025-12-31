@@ -116,8 +116,40 @@
         ] ++ modules;  # Append any custom modules passed to mkUconsoleImage
       };
 
+      # Helper function for users to create their own uConsole configurations
+      # Usage: nixos-uconsole.lib.mkUConsoleSystem { modules = [ ./configuration.nix ]; }
+      mkUConsoleSystem = { modules ? [], specialArgs ? {} }: nixos-raspberrypi.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          nixos-raspberrypi = nixos-raspberrypi;
+        } // specialArgs;
+        modules = [
+          # Raspberry Pi hardware support
+          nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+          nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
+
+          # uConsole hardware support
+          self.nixosModules.kernel
+          self.nixosModules.configtxt
+          self.nixosModules.cm4
+
+          # Compatibility fixes
+          ({ lib, modulesPath, ... }: {
+            disabledModules = [ (modulesPath + "/rename.nix") ];
+            imports = [
+              (lib.mkAliasOptionModule [ "environment" "checkConfigurationOptions" ] [ "_module" "check" ])
+            ];
+            nixpkgs.hostPlatform = "aarch64-linux";
+            boot.loader.raspberryPi.bootloader = "kernel";
+          })
+        ] ++ modules;
+      };
+
     in
     {
+      # Export mkUConsoleSystem for users
+      lib = { inherit mkUConsoleSystem; };
+
       #
       # === Modules ===
       # These can be imported into your own NixOS configuration
