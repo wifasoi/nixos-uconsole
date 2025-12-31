@@ -1,14 +1,35 @@
 #!/usr/bin/env bash
+#
+# Release script for nixos-uconsole
+#
+# Usage:
+#   ./release.sh          # Auto-bump patch version (0.1.1 -> 0.1.2)
+#   ./release.sh 0.2.0    # Release specific version
+#   ./release.sh 1.0.0    # Major release
+#
+# What it does:
+#   1. Build the minimal SD image
+#   2. Push build artifacts to cachix
+#   3. Compress image with zstd
+#   4. Create GitHub release with notes
+#   5. Upload compressed image to release
+#
 set -euo pipefail
 
 REPO="nixos-uconsole/nixos-uconsole"
 CACHE="nixos-clockworkpi-uconsole"
 
-# Get version from git tags, or default to 0.1.0
-VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
-# Bump patch version: v0.1.0 -> v0.1.1
-NEXT_VERSION=$(echo "$VERSION" | awk -F. '{$NF = $NF + 1;} 1' OFS=. | sed 's/^/v/' | sed 's/vv/v/')
+# Accept version as argument, or auto-bump patch
+if [ -n "${1:-}" ]; then
+  NEXT_VERSION="v${1#v}"  # Ensure v prefix
+else
+  # Get version from git tags, or default to 0.1.0
+  VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+  # Bump patch version: v0.1.0 -> v0.1.1
+  NEXT_VERSION=$(echo "$VERSION" | awk -F. '{$NF = $NF + 1;} 1' OFS=. | sed 's/^/v/' | sed 's/vv/v/')
+fi
 
+echo "==> Releasing ${NEXT_VERSION}..."
 echo "==> Building minimal image..."
 nix build .#minimal 2>&1 | tee build.log
 
