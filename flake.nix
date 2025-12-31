@@ -142,9 +142,9 @@
 
       #
       # === Pre-built Images ===
-      # Build with: nix build .#images.minimal
+      # Build with: nix build .#minimal
       #
-      images = {
+      packages.aarch64-linux = {
         minimal = (mkUconsoleImage {
           modules = [ ./images/minimal.nix ];
         }).config.system.build.sdImage;

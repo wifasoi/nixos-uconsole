@@ -8,7 +8,7 @@ NixOS for ClockworkPi uConsole.
 
 ```bash
 # Build the minimal image
-nix build .#images.minimal
+nix build .#minimal
 
 # Flash to SD card (replace sdX with your device)
 sudo dd if=result/sd-image/*.img of=/dev/sdX bs=4M status=progress
@@ -83,7 +83,7 @@ Default packages: vim, nano, btop, curl, wget, iw, bluetuith, git, tmux, and mor
 
 ```bash
 # Build the minimal SD image
-nix build .#images.minimal
+nix build .#minimal
 
 # Build for a specific configuration
 nix build .#nixosConfigurations.uconsole-cm4-minimal.config.system.build.sdImage
