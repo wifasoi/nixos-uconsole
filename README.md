@@ -17,20 +17,9 @@ sudo dd if=nixos-uconsole-cm4-*.img of=/dev/sdX bs=4M status=progress
 sync
 ```
 
-### Build from Source
-
-```bash
-# Build the minimal image
-nix build .#minimal
-
-# Flash to SD card (replace sdX with your device)
-sudo dd if=result/sd-image/*.img of=/dev/sdX bs=4M status=progress
-sync
-```
-
 ### Resize Partition
 
-After flashing, expand the root partition to use all available space:
+After flashing, expand the root partition:
 
 ```bash
 sudo parted /dev/sdX resizepart 2 100%
@@ -41,45 +30,11 @@ sudo resize2fs /dev/sdX2
 
 1. Insert SD card into uConsole and power on
 2. Login as `root` with password `changeme` (will be changed on first login)
+3. Connect to WiFi: `nmtui`
 
-### Connect to WiFi
+## Custom Configuration
 
-```bash
-nmtui
-```
-
-### Configure Your System
-
-Generate a base configuration:
-
-```bash
-nixos-generate-config
-```
-
-Edit `/etc/nixos/configuration.nix` and add the bootloader settings:
-
-```nix
-{ config, pkgs, ... }:
-{
-  imports = [ ./hardware-configuration.nix ];
-
-  # Required for Raspberry Pi
-  boot.loader.grub.enable = false;
-  boot.loader.generic-extlinux-compatible.enable = true;
-
-  # Your settings here...
-}
-```
-
-Then rebuild:
-
-```bash
-nixos-rebuild switch
-```
-
-Alternatively, clone an existing NixOS config and adapt it - just ensure the bootloader is set correctly.
-
-## Using in Your Own Flake
+Create a flake for your uConsole:
 
 ```nix
 {
@@ -88,63 +43,39 @@ Alternatively, clone an existing NixOS config and adapt it - just ensure the boo
     nixos-uconsole.url = "github:nixos-uconsole/nixos-uconsole";
   };
 
-  outputs = { nixpkgs, nixos-uconsole, ... }: {
-    nixosConfigurations.my-uconsole = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      modules = [
-        nixos-uconsole.nixosModules.uconsole-cm4
-        ./configuration.nix
-      ];
+  outputs = { nixos-uconsole, ... }: {
+    nixosConfigurations.my-uconsole = nixos-uconsole.lib.mkUConsoleSystem {
+      modules = [ ./configuration.nix ];
     };
   };
 }
 ```
 
-## Available Modules
+Then rebuild:
 
-| Module | Description |
-|--------|-------------|
-| `uconsole-cm4` | All-in-one module for CM4 (includes all below) |
-| `kernel` | Kernel patches for display, power, backlight |
-| `configtxt` | Raspberry Pi boot configuration |
-| `cm4` | CM4-specific kernel parameters |
-| `base` | Sensible defaults (NetworkManager, SSH, etc.) |
+```bash
+sudo nixos-rebuild switch --flake .#my-uconsole
+```
 
 ## What's Included
 
-The base configuration provides:
+The base image provides:
 
 - **NetworkManager** - Auto-starts, use `nmtui` to connect
 - **SSH** - Auto-starts, connect remotely
 - **Mosh** - Mobile shell for flaky connections
+- **Bluetooth** - Use `bluetuith` TUI to pair devices
 - **Graphics** - Mesa GPU drivers enabled
 - **Console font** - Sized for the 5" display
 
-Default packages: vim, nano, btop, curl, wget, iw, bluetuith, git, tmux, and more.
+Default packages: vim, nano, btop, bluetuith, curl, wget, git, tmux, and more.
 
-## Building
-
-### Requirements
-
-- Nix with flakes enabled
-- ~10GB disk space
-- ~4GB RAM (more is better for kernel compilation)
-
-### Build Commands
+## Building from Source
 
 ```bash
-# Build the minimal SD image
-nix build .#minimal
-
-# Build for a specific configuration
-nix build .#nixosConfigurations.uconsole-cm4-minimal.config.system.build.sdImage
+nix build github:nixos-uconsole/nixos-uconsole#minimal
+sudo dd if=result/sd-image/*.img of=/dev/sdX bs=4M status=progress
 ```
-
-### Cross-Compilation
-
-Building on x86_64 works but takes longer. Native aarch64 builds are faster.
-
-The base module includes our binary cache, so rebuilds on the device pull pre-built packages automatically.
 
 ## Hardware Support
 
@@ -164,7 +95,6 @@ Contributions welcome! Areas that need work:
 - CM5 support
 - Desktop environment presets
 - Documentation improvements
-- Testing on different CM4 variants
 
 ## License
 
@@ -173,6 +103,5 @@ MIT
 ## Credits
 
 - [ClockworkPi](https://www.clockworkpi.com/) for the uConsole hardware
-- [oom-hardware](https://github.com/robertjakub/oom-hardware) for the original kernel patches and NixOS configuration
+- [oom-hardware](https://github.com/robertjakub/oom-hardware) for the original kernel patches
 - [nixos-raspberrypi](https://github.com/robertjakub/nixos-raspberrypi) for Raspberry Pi NixOS support
-- The NixOS community
