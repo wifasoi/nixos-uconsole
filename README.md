@@ -31,6 +31,7 @@ sudo resize2fs /dev/sdX2
 1. Insert SD card into the uConsole and power on
 2. Login as `root` with password `changeme` (will be changed on first login)
 3. Connect to WiFi: `nmtui`
+4. Wait a few seconds for time sync (the RPi has no hardware clock, so HTTPS may fail until NTP syncs)
 
 ## Custom Configuration
 
@@ -66,6 +67,7 @@ The base image provides:
 - **Mosh** - Mobile shell for flaky connections
 - **Bluetooth** - Use `bluetuith` TUI to pair devices
 - **Graphics** - Mesa GPU drivers enabled
+- **Power button** - Short press sleeps, long press shuts down
 - **Console font** - Sized for the 5" display
 
 Default packages: vim, nano, btop, bluetuith, curl, wget, git, tmux, and more.
