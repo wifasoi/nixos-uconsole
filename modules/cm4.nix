@@ -1,7 +1,7 @@
-# CM4-Specific Kernel Parameters
+# CM4-Specific Configuration
 #
-# Boot parameters passed to the Linux kernel for the Compute Module 4.
-# These configure UART, audio, and other CM4-specific settings.
+# Settings specific to the Compute Module 4, including kernel parameters
+# and binary cache for pre-built packages.
 
 { ... }:
 {
@@ -16,4 +16,10 @@
     "snd_bcm2835.enable_hdmi=1"        # Enable HDMI audio output
     "snd_bcm2835.enable_headphones=1"  # Enable headphone jack
   ];
+
+  # Binary cache for pre-built kernels and packages
+  nix.settings = {
+    substituters = [ "https://nixos-clockworkpi-uconsole.cachix.org" ];
+    trusted-public-keys = [ "nixos-clockworkpi-uconsole.cachix.org-1:6NRN3n9/r3w5ZS8/gZudW6PkPDoC3liCt/dBseICua0=" ];
+  };
 }
