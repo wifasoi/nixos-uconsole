@@ -180,6 +180,28 @@
       };
 
       #
+      # === Dev Shell ===
+      # Enter with: nix develop (or direnv allow)
+      #
+      devShells = let
+        mkDevShell = system: nixpkgs.legacyPackages.${system}.mkShell {
+          packages = with nixpkgs.legacyPackages.${system}; [
+            cachix
+            gh
+            zstd
+            # Dev tools
+            nixd                    # Nix LSP
+            nixfmt-rfc-style        # Nix formatter
+            bash-language-server    # Bash LSP
+            shellcheck              # Bash linter
+          ];
+        };
+      in {
+        aarch64-linux.default = mkDevShell "aarch64-linux";
+        x86_64-linux.default = mkDevShell "x86_64-linux";
+      };
+
+      #
       # === Pre-built Images ===
       # Build with: nix build .#minimal
       #
