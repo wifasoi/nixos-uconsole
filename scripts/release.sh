@@ -30,6 +30,13 @@ else
 fi
 
 echo "==> Releasing ${NEXT_VERSION}..."
+
+echo "==> Pulling latest changes..."
+git pull
+
+echo "==> Updating flake inputs..."
+nix flake update
+
 echo "==> Building minimal image..."
 nix build .#minimal 2>&1 | tee build.log
 
