@@ -72,6 +72,15 @@ The base image provides:
 
 Default packages: vim, nano, btop, bluetuith, curl, wget, git, tmux, and more.
 
+## Binary Cache
+
+Pre-built packages (including the kernel) are provided via [Cachix](https://app.cachix.org/cache/nixos-clockworkpi-uconsole) and configured automatically in the flake.
+
+> **Note for nixpkgs-unstable users:** Our cache is built with nixpkgs stable (25.11). If you override with `nixos-uconsole.inputs.nixpkgs.follows = "nixpkgs"` pointing to unstable, cache hits won't work and you'll rebuild the kernel locally. Options:
+> 1. Don't use `follows` - let nixos-uconsole use its pinned stable nixpkgs
+> 2. Build on a more powerful machine with `--build-host` or `--target-host`
+> 3. Be prepared to wait several hours for the kernel to build on the uConsole
+
 ## Building from Source
 
 ```bash
