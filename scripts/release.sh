@@ -72,4 +72,7 @@ sudo resize2fs /dev/sdX2
 echo "==> Uploading image..."
 gh release upload "$NEXT_VERSION" "$IMG_NAME" --repo "$REPO"
 
+echo "==> Cleaning up..."
+rm -f "$IMG_NAME"
+
 echo "==> Done! Release: https://github.com/${REPO}/releases/tag/${NEXT_VERSION}"
