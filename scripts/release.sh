@@ -19,6 +19,12 @@ set -euo pipefail
 REPO="nixos-uconsole/nixos-uconsole"
 CACHE="nixos-clockworkpi-uconsole"
 
+echo "==> Pulling latest changes..."
+git pull
+
+echo "==> Updating flake inputs..."
+nix flake update
+
 # Accept version as argument, or auto-bump patch
 if [ -n "${1:-}" ]; then
   NEXT_VERSION="v${1#v}"  # Ensure v prefix
@@ -30,12 +36,6 @@ else
 fi
 
 echo "==> Releasing ${NEXT_VERSION}..."
-
-echo "==> Pulling latest changes..."
-git pull
-
-echo "==> Updating flake inputs..."
-nix flake update
 
 echo "==> Building minimal image..."
 nix build .#minimal 2>&1 | tee build.log
