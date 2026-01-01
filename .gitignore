@@ -7,3 +7,4 @@ result-*
 
 .devenv
 nixos*.img.zst
+build.log
