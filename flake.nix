@@ -219,7 +219,10 @@
     in
     {
       # Export mkUConsoleSystem for users
-      lib = { inherit mkUConsoleSystem; };
+      lib = {
+        inherit mkUConsoleSystem;
+        inherit mkUConsoleImage;
+      };
 
       #
       # === Modules ===
