@@ -8,8 +8,11 @@ NixOS for ClockworkPi uConsole.
 
 Download the latest release from [GitHub Releases](https://github.com/nixos-uconsole/nixos-uconsole/releases).
 
+- **CM4**: `nixos-uconsole-cm4-*.img.zst`
+- **CM5**: `nixos-uconsole-cm5-*.img.zst` (experimental)
+
 ```bash
-# Decompress
+# Decompress (replace cm4 with cm5 if needed)
 zstd -d nixos-uconsole-cm4-*.img.zst
 
 # Flash to SD card (replace sdX with your device)
