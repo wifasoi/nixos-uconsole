@@ -24,6 +24,20 @@
         "cm5"
       ];
 
+      # Helper to select nixos-raspberrypi modules based on variant
+      # Centralized here to avoid drift between mkUConsoleImage and mkUConsoleSystem
+      mkRpiModules =
+        variant:
+        if variant == "cm5" then
+          [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
+        else if variant == "cm4" then
+          [
+            nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+            nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
+          ]
+        else
+          throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
+
       # Helper function to create uConsole SD image configurations
       # Takes a variant (cm4 or cm5) and additional modules as arguments
       mkUConsoleImage =
@@ -31,19 +45,6 @@
           variant ? "cm4",
           modules ? [ ],
         }:
-        let
-          # Select the appropriate nixos-raspberrypi modules based on variant
-          rpiModules =
-            if variant == "cm5" then
-              [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
-            else if variant == "cm4" then
-              [
-                nixos-raspberrypi.nixosModules.raspberry-pi-4.base
-                nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
-              ]
-            else
-              throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
-        in
         nixos-raspberrypi.lib.nixosSystem {
           # specialArgs makes these values available to all modules
           # Left side = attribute name modules will use
@@ -69,7 +70,7 @@
           # === Raspberry Pi Hardware Support ===
           # CM4 uses Pi 4 modules, CM5 uses Pi 5 modules
           #
-          ++ rpiModules
+          ++ mkRpiModules variant
           ++ [
             #
             # === uConsole-Specific Modules ===
@@ -186,19 +187,6 @@
           modules ? [ ],
           specialArgs ? { },
         }:
-        let
-          # Select the appropriate nixos-raspberrypi modules based on variant
-          rpiModules =
-            if variant == "cm5" then
-              [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
-            else if variant == "cm4" then
-              [
-                nixos-raspberrypi.nixosModules.raspberry-pi-4.base
-                nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
-              ]
-            else
-              throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
-        in
         nixos-raspberrypi.lib.nixosSystem {
           specialArgs = {
             inherit inputs;
@@ -207,7 +195,7 @@
           }
           // specialArgs;
           modules =
-            rpiModules
+            mkRpiModules variant
             ++ [
               # uConsole hardware support
               self.nixosModules.kernel
