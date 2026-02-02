@@ -76,7 +76,7 @@
             #
             self.nixosModules.kernel # Kernel patches for display, power, etc.
             self.nixosModules.configtxt # Raspberry Pi boot configuration
-            self.nixosModules.cm # Compute module kernel parameters and cache
+            (import ./modules/cm.nix { isCM4 = variant == "cm4"; }) # Compute module kernel parameters
             self.nixosModules.base # Good defaults (NetworkManager, SSH, etc.)
             self.nixosModules.uc-sleep # Power button sleep/wake handling
             self.nixosModules.uc-4g # Optional 4G module (enable with hardware.uc-4g.enable)
@@ -210,7 +210,7 @@
               # uConsole hardware support
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              self.nixosModules.cm
+              (import ./modules/cm.nix { isCM4 = variant == "cm4"; })
               self.nixosModules.base
               self.nixosModules.uc-sleep
               self.nixosModules.uc-4g
