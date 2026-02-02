@@ -324,7 +324,7 @@
       # === Pre-built Images ===
       # Build with: nix build .#minimal-cm4 or nix build .#minimal-cm5
       #
-      packages.aarch64-linux = {
+      packages.aarch64-linux = rec {
         minimal-cm4 =
           (mkUConsoleImage {
             variant = "cm4";
@@ -336,6 +336,13 @@
             variant = "cm5";
             modules = [ ./images/minimal.nix ];
           }).config.system.build.sdImage;
+
+        # Deprecated: use minimal-cm4 instead
+        minimal =
+          let
+            msg = "nixos-uconsole: '.#minimal' is deprecated, use '.#minimal-cm4' instead";
+          in
+          nixpkgs.lib.warn msg minimal-cm4;
       };
 
       #
