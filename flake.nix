@@ -18,6 +18,12 @@
       ...
     }@inputs:
     let
+      # Valid uConsole variants
+      validVariants = [
+        "cm4"
+        "cm5"
+      ];
+
       # Helper function to create uConsole SD image configurations
       # Takes a variant (cm4 or cm5) and additional modules as arguments
       mkUConsoleImage =
@@ -30,11 +36,13 @@
           rpiModules =
             if variant == "cm5" then
               [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
-            else
+            else if variant == "cm4" then
               [
                 nixos-raspberrypi.nixosModules.raspberry-pi-4.base
                 nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
-              ];
+              ]
+            else
+              throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
         in
         nixos-raspberrypi.lib.nixosSystem {
           # specialArgs makes these values available to all modules
@@ -182,11 +190,13 @@
           rpiModules =
             if variant == "cm5" then
               [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
-            else
+            else if variant == "cm4" then
               [
                 nixos-raspberrypi.nixosModules.raspberry-pi-4.base
                 nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
-              ];
+              ]
+            else
+              throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
         in
         nixos-raspberrypi.lib.nixosSystem {
           specialArgs = {
