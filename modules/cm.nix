@@ -2,9 +2,12 @@
 #
 # Kernel parameters for CM4 and CM5.
 # Audio params are CM4-only (BCM2835 audio driver doesn't exist on CM5/BCM2712).
+#
+# Requires `isCM4` to be passed via specialArgs or direct import.
 
 {
-  isCM4 ? true,
+  lib,
+  isCM4,
   ...
 }:
 {
