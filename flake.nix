@@ -51,6 +51,7 @@
           specialArgs = {
             inherit inputs; # Same as: inputs = inputs;
             nixos-raspberrypi = nixos-raspberrypi; # Lets modules access rpi-specific stuff
+            isCM4 = variant == "cm4"; # For conditional kernel params in cm.nix
           };
 
           # `++` concatenates lists: [1 2] ++ [3 4] = [1 2 3 4]
@@ -76,7 +77,7 @@
             #
             self.nixosModules.kernel # Kernel patches for display, power, etc.
             self.nixosModules.configtxt # Raspberry Pi boot configuration
-            (import ./modules/cm.nix { isCM4 = variant == "cm4"; }) # Compute module kernel parameters
+            self.nixosModules.cm # Compute module kernel parameters
             self.nixosModules.base # Good defaults (NetworkManager, SSH, etc.)
             self.nixosModules.uc-sleep # Power button sleep/wake handling
             self.nixosModules.uc-4g # Optional 4G module (enable with hardware.uc-4g.enable)
@@ -202,6 +203,7 @@
           specialArgs = {
             inherit inputs;
             nixos-raspberrypi = nixos-raspberrypi;
+            isCM4 = variant == "cm4";
           }
           // specialArgs;
           modules =
@@ -210,7 +212,7 @@
               # uConsole hardware support
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              (import ./modules/cm.nix { isCM4 = variant == "cm4"; })
+              self.nixosModules.cm
               self.nixosModules.base
               self.nixosModules.uc-sleep
               self.nixosModules.uc-4g
@@ -271,24 +273,30 @@
 
         # All-in-one: imports all uConsole modules (use with appropriate rpi base)
         uconsole-cm4 =
-          { ... }:
+          { lib, ... }:
           {
             imports = [
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              (import ./modules/cm.nix { isCM4 = true; })
+              (import ./modules/cm.nix {
+                inherit lib;
+                isCM4 = true;
+              })
               self.nixosModules.base
               self.nixosModules.uc-sleep
             ];
           };
 
         uconsole-cm5 =
-          { ... }:
+          { lib, ... }:
           {
             imports = [
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              (import ./modules/cm.nix { isCM4 = false; })
+              (import ./modules/cm.nix {
+                inherit lib;
+                isCM4 = false;
+              })
               self.nixosModules.base
               self.nixosModules.uc-sleep
             ];
