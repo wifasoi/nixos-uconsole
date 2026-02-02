@@ -16,14 +16,9 @@
       "8250.nr_uarts=1" # Number of 8250 UARTs to register
       "console=tty1"
     ]
-    ++ (
-      if isCM4 then
-        [
-          # BCM2835 audio driver settings (CM4 only)
-          "snd_bcm2835.enable_hdmi=1"
-          "snd_bcm2835.enable_headphones=1"
-        ]
-      else
-        [ ]
-    );
+    # BCM2835 audio driver settings (CM4 only)
+    ++ lib.optionals isCM4 [
+      "snd_bcm2835.enable_hdmi=1"
+      "snd_bcm2835.enable_headphones=1"
+    ];
 }
