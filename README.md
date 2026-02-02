@@ -101,7 +101,7 @@ sudo dd if=result/sd-image/*.img of=/dev/sdX bs=4M status=progress
 
 Currently supported:
 - ClockworkPi uConsole with CM4
-- ClockworkPi uConsole with CM5 (currently being tested)
+- ClockworkPi uConsole with CM5 (experimental support)
 
 The kernel includes patches for:
 - CWU50 5" 720x1280 DSI display
