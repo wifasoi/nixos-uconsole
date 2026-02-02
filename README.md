@@ -95,6 +95,8 @@ nix build github:nixos-uconsole/nixos-uconsole#minimal-cm5
 sudo dd if=result/sd-image/*.img of=/dev/sdX bs=4M status=progress
 ```
 
+> **Note:** The `.#minimal` alias is deprecated and will be removed in a future release. Use `.#minimal-cm4` explicitly.
+
 ## Hardware Support
 
 Currently supported:
