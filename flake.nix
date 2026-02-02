@@ -276,7 +276,7 @@
             imports = [
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              self.nixosModules.cm
+              (import ./modules/cm.nix { isCM4 = true; })
               self.nixosModules.base
               self.nixosModules.uc-sleep
             ];
@@ -288,7 +288,7 @@
             imports = [
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              self.nixosModules.cm
+              (import ./modules/cm.nix { isCM4 = false; })
               self.nixosModules.base
               self.nixosModules.uc-sleep
             ];
