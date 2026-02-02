@@ -204,45 +204,48 @@
             nixos-raspberrypi = nixos-raspberrypi;
           }
           // specialArgs;
-          modules = rpiModules ++ [
-            # uConsole hardware support
-            self.nixosModules.kernel
-            self.nixosModules.configtxt
-            self.nixosModules.cm
-            self.nixosModules.uc-sleep
-            self.nixosModules.uc-4g
+          modules =
+            rpiModules
+            ++ [
+              # uConsole hardware support
+              self.nixosModules.kernel
+              self.nixosModules.configtxt
+              self.nixosModules.cm
+              self.nixosModules.base
+              self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
 
-            # Compatibility fixes
-            (
-              { lib, modulesPath, ... }:
-              {
-                disabledModules = [ (modulesPath + "/rename.nix") ];
-                imports = [
-                  (lib.mkAliasOptionModule [ "environment" "checkConfigurationOptions" ] [ "_module" "check" ])
-                ];
-                nixpkgs.hostPlatform = "aarch64-linux";
-                boot.loader.raspberryPi.bootloader = "kernel";
-
-                # Filesystem configuration for SD card
-                fileSystems."/" = lib.mkDefault {
-                  device = "/dev/disk/by-label/NIXOS_SD";
-                  fsType = "ext4";
-                };
-
-                # Override nixpkgs sd-image.nix which hardcodes noauto/nofail
-                # We need automount for nixos-raspberrypi's generational bootloader
-                fileSystems."/boot/firmware" = {
-                  device = lib.mkDefault "/dev/disk/by-label/FIRMWARE";
-                  fsType = lib.mkDefault "vfat";
-                  options = lib.mkForce [
-                    "fmask=0022"
-                    "dmask=0022"
+              # Compatibility fixes
+              (
+                { lib, modulesPath, ... }:
+                {
+                  disabledModules = [ (modulesPath + "/rename.nix") ];
+                  imports = [
+                    (lib.mkAliasOptionModule [ "environment" "checkConfigurationOptions" ] [ "_module" "check" ])
                   ];
-                };
-              }
-            )
-          ]
-          ++ modules;
+                  nixpkgs.hostPlatform = "aarch64-linux";
+                  boot.loader.raspberryPi.bootloader = "kernel";
+
+                  # Filesystem configuration for SD card
+                  fileSystems."/" = lib.mkDefault {
+                    device = "/dev/disk/by-label/NIXOS_SD";
+                    fsType = "ext4";
+                  };
+
+                  # Override nixpkgs sd-image.nix which hardcodes noauto/nofail
+                  # We need automount for nixos-raspberrypi's generational bootloader
+                  fileSystems."/boot/firmware" = {
+                    device = lib.mkDefault "/dev/disk/by-label/FIRMWARE";
+                    fsType = lib.mkDefault "vfat";
+                    options = lib.mkForce [
+                      "fmask=0022"
+                      "dmask=0022"
+                    ];
+                  };
+                }
+              )
+            ]
+            ++ modules;
         };
 
     in
