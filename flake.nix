@@ -188,12 +188,11 @@
           specialArgs ? { },
         }:
         nixos-raspberrypi.lib.nixosSystem {
-          specialArgs = {
+          specialArgs = specialArgs // {
             inherit inputs;
             nixos-raspberrypi = nixos-raspberrypi;
             isCM4 = variant == "cm4";
-          }
-          // specialArgs;
+          };
           modules =
             mkRpiModules variant
             ++ [
@@ -272,6 +271,7 @@
               })
               self.nixosModules.base
               self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
             ];
           };
 
@@ -287,6 +287,7 @@
               })
               self.nixosModules.base
               self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
             ];
           };
       };
