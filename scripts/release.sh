@@ -46,7 +46,9 @@ cachix push "$CACHE" result
 
 echo "==> Compressing CM4 image..."
 CM4_IMG_NAME="nixos-uconsole-cm4-${NEXT_VERSION}.img.zst"
-zstd -T0 result/sd-image/*.img -o "$CM4_IMG_NAME"
+CM4_IMG=$(find result/sd-image -name '*.img' -type f | head -1)
+[[ -z "$CM4_IMG" ]] && { echo "Error: No CM4 image found"; exit 1; }
+zstd -T0 "$CM4_IMG" -o "$CM4_IMG_NAME"
 
 # Build and process CM5 image
 echo "==> Building CM5 image..."
@@ -57,7 +59,9 @@ cachix push "$CACHE" result
 
 echo "==> Compressing CM5 image..."
 CM5_IMG_NAME="nixos-uconsole-cm5-${NEXT_VERSION}.img.zst"
-zstd -T0 result/sd-image/*.img -o "$CM5_IMG_NAME"
+CM5_IMG=$(find result/sd-image -name '*.img' -type f | head -1)
+[[ -z "$CM5_IMG" ]] && { echo "Error: No CM5 image found"; exit 1; }
+zstd -T0 "$CM5_IMG" -o "$CM5_IMG_NAME"
 
 echo "==> Creating release ${NEXT_VERSION}..."
 gh release create "$NEXT_VERSION" \
