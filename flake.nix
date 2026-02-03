@@ -188,9 +188,11 @@
           specialArgs ? { },
         }:
         nixos-raspberrypi.lib.nixosSystem {
-          specialArgs = specialArgs // {
+          specialArgs = {
             inherit inputs;
             nixos-raspberrypi = nixos-raspberrypi;
+          } // specialArgs // {
+            # isCM4 must not be overridden - it's derived from variant
             isCM4 = variant == "cm4";
           };
           modules =
