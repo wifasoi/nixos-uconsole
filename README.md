@@ -121,7 +121,7 @@ The uConsole hardware is configured via `hardware.raspberry-pi.config` options w
 Override these in your configuration:
 
 ```nix
-hardware.raspberry-pi.config.cm4.dt-overlays.clockworkpi-uconsole.params = {
+hardware.raspberry-pi.config.cm4."dt-overlays".clockworkpi-uconsole.params = {
   nopcie0.enable = true;              # Disable PCIe
   nogenet.enable = true;              # Disable built-in ethernet
   no_sound_switch.enable = true;      # Disable sound routing switch
@@ -135,7 +135,7 @@ hardware.raspberry-pi.config.cm4.dt-overlays.clockworkpi-uconsole.params = {
 ### CM5 Overlay Parameters
 
 ```nix
-hardware.raspberry-pi.config.cm5.dt-overlays.clockworkpi-uconsole-cm5.params = {
+hardware.raspberry-pi.config.cm5."dt-overlays".clockworkpi-uconsole-cm5.params = {
   no_rp1eth.enable = true;            # Disable RP1 ethernet
   no_sound_switch.enable = true;      # Disable sound routing switch
   energy_full_design_uwh.enable = true;
