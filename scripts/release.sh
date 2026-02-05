@@ -78,8 +78,11 @@ gh release create "$NEXT_VERSION" \
 ## Flash
 
 \`\`\`bash
-# Decompress (replace cm4 with cm5 if needed)
-zstd -d ${CM4_IMG_NAME} -o nixos-uconsole.img
+# Decompress (use CM4 or CM5 image as needed)
+zstd -d nixos-uconsole-cm4-${NEXT_VERSION}.img.zst -o nixos-uconsole.img
+# Or for CM5:
+# zstd -d nixos-uconsole-cm5-${NEXT_VERSION}.img.zst -o nixos-uconsole.img
+
 sudo dd if=nixos-uconsole.img of=/dev/sdX bs=4M status=progress
 \`\`\`
 
