@@ -21,20 +21,34 @@ python3.pkgs.buildPythonApplication {
     rev = "fb97421766eea93f55ac31d1865c47e0913cee70";
     hash = "sha256-zJzKKENLPsgun7zGSpNLy6LPcdO55F/XeLDbAxxZpD0=";
   };
+  build-system = with python3.pkgs; [setuptools];
+  #propagatedBuildInputs = with python3.pkgs; [
+  #  python-uinput
+  #  inotify-simple
+  #];
+  preBuild = ''
+    touch src/__init__.py
+    cat >> src/sleep_power_control.py << EOF
+def main():
+  pass
+
+EOF
+    cat >> src/sleep_remap_powerkey.py << EOF
+def main():
+  pass
+
+EOF
+    cat > pyproject.toml << EOF
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
   dontBuild = true;
 
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/bin
-    echo "#!${python}/bin/python3" > $out/bin/sleep_power_control
-    cat src/sleep_power_control.py >> $out/bin/sleep_power_control
-    chmod 0555 $out/bin/sleep_power_control
-
-    echo "#!${python}/bin/python3" > $out/bin/sleep_remap_powerkey
-    cat src/sleep_remap_powerkey.py >> $out/bin/sleep_remap_powerkey
-    chmod 0555 $out/bin/sleep_remap_powerkey
-    runHook postInstall
+[project.scripts]
+sleep_power_control = "sleep_power_control:main"
+sleep_remap_powerkey = "sleep_remap_powerkey:main"
+EOF
   '';
 
   meta = {
