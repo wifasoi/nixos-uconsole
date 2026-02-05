@@ -8,11 +8,11 @@
 #   ./release.sh 1.0.0    # Major release
 #
 # What it does:
-#   1. Build the minimal SD image
+#   1. Build the minimal SD images (CM4 and CM5)
 #   2. Push build artifacts to cachix
-#   3. Compress image with zstd
+#   3. Compress images with zstd
 #   4. Create GitHub release with notes
-#   5. Upload compressed image to release
+#   5. Upload compressed images to release
 #
 set -euo pipefail
 
@@ -37,27 +37,52 @@ fi
 
 echo "==> Releasing ${NEXT_VERSION}..."
 
-echo "==> Building minimal image..."
-nix build .#minimal 2>&1 | tee build.log
+# Build and process CM4 image
+echo "==> Building CM4 image..."
+nix build .#minimal-cm4 2>&1 | tee build-cm4.log
 
-echo "==> Pushing to cachix..."
+echo "==> Pushing CM4 to cachix..."
 cachix push "$CACHE" result
 
-echo "==> Compressing image..."
-IMG_NAME="nixos-uconsole-cm4-${NEXT_VERSION}.img.zst"
-zstd -T0 result/sd-image/*.img -o "$IMG_NAME"
+echo "==> Compressing CM4 image..."
+CM4_IMG_NAME="nixos-uconsole-cm4-${NEXT_VERSION}.img.zst"
+CM4_IMG=$(find result/sd-image -name '*.img' -type f | head -1)
+[[ -z "$CM4_IMG" ]] && { echo "Error: No CM4 image found"; exit 1; }
+zstd -T0 "$CM4_IMG" -o "$CM4_IMG_NAME"
+
+# Build and process CM5 image
+echo "==> Building CM5 image..."
+nix build .#minimal-cm5 2>&1 | tee build-cm5.log
+
+echo "==> Pushing CM5 to cachix..."
+cachix push "$CACHE" result
+
+echo "==> Compressing CM5 image..."
+CM5_IMG_NAME="nixos-uconsole-cm5-${NEXT_VERSION}.img.zst"
+CM5_IMG=$(find result/sd-image -name '*.img' -type f | head -1)
+[[ -z "$CM5_IMG" ]] && { echo "Error: No CM5 image found"; exit 1; }
+zstd -T0 "$CM5_IMG" -o "$CM5_IMG_NAME"
 
 echo "==> Creating release ${NEXT_VERSION}..."
 gh release create "$NEXT_VERSION" \
   --repo "$REPO" \
   --title "$NEXT_VERSION" \
   --generate-notes \
-  --notes "NixOS uConsole CM4 image
+  --notes "NixOS uConsole images for CM4 and CM5.
+
+## Download
+
+- **CM4**: \`${CM4_IMG_NAME}\` (recommended, has binary cache)
+- **CM5**: \`${CM5_IMG_NAME}\` (experimental)
 
 ## Flash
 
 \`\`\`bash
-zstd -d ${IMG_NAME} -o nixos-uconsole.img
+# Decompress (use CM4 or CM5 image as needed)
+zstd -d nixos-uconsole-cm4-${NEXT_VERSION}.img.zst -o nixos-uconsole.img
+# Or for CM5:
+# zstd -d nixos-uconsole-cm5-${NEXT_VERSION}.img.zst -o nixos-uconsole.img
+
 sudo dd if=nixos-uconsole.img of=/dev/sdX bs=4M status=progress
 \`\`\`
 
@@ -76,10 +101,10 @@ sudo resize2fs /dev/sdX2
 2. Login as \`root\` with password \`changeme\` (will be changed on first login)
 "
 
-echo "==> Uploading image..."
-gh release upload "$NEXT_VERSION" "$IMG_NAME" --repo "$REPO"
+echo "==> Uploading images..."
+gh release upload "$NEXT_VERSION" "$CM4_IMG_NAME" "$CM5_IMG_NAME" --repo "$REPO"
 
 echo "==> Cleaning up..."
-rm -f "$IMG_NAME"
+rm -f "$CM4_IMG_NAME" "$CM5_IMG_NAME" build-cm4.log build-cm5.log
 
 echo "==> Done! Release: https://github.com/${REPO}/releases/tag/${NEXT_VERSION}"

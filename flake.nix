@@ -18,10 +18,31 @@
       ...
     }@inputs:
     let
+      # Valid uConsole variants
+      validVariants = [
+        "cm4"
+        "cm5"
+      ];
+
+      # Helper to select nixos-raspberrypi modules based on variant
+      # Centralized here to avoid drift between mkUConsoleImage and mkUConsoleSystem
+      mkRpiModules =
+        variant:
+        if variant == "cm5" then
+          [ nixos-raspberrypi.nixosModules.raspberry-pi-5.base ]
+        else if variant == "cm4" then
+          [
+            nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+            nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
+          ]
+        else
+          throw "Invalid uConsole variant '${variant}'. Expected one of: ${builtins.concatStringsSep ", " validVariants}";
+
       # Helper function to create uConsole SD image configurations
-      # Takes additional modules as argument for customization
+      # Takes a variant (cm4 or cm5) and additional modules as arguments
       mkUConsoleImage =
         {
+          variant ? "cm4",
           modules ? [ ],
         }:
         nixos-raspberrypi.lib.nixosSystem {
@@ -31,6 +52,7 @@
           specialArgs = {
             inherit inputs; # Same as: inputs = inputs;
             nixos-raspberrypi = nixos-raspberrypi; # Lets modules access rpi-specific stuff
+            isCM4 = variant == "cm4"; # For conditional kernel params in cm.nix
           };
 
           # `++` concatenates lists: [1 2] ++ [3 4] = [1 2 3 4]
@@ -43,21 +65,20 @@
             "${nixpkgs}/nixos/modules/profiles/base.nix"
             "${nixpkgs}/nixos/modules/installer/sd-card/sd-image.nix"
             "${nixpkgs}/nixos/modules/installer/cd-dvd/channel.nix"
-
-            #
-            # === Raspberry Pi Hardware Support ===
-            # CM4 is based on Raspberry Pi 4, so we use those modules
-            #
-            nixos-raspberrypi.nixosModules.raspberry-pi-4.base
-            nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
-
+          ]
+          #
+          # === Raspberry Pi Hardware Support ===
+          # CM4 uses Pi 4 modules, CM5 uses Pi 5 modules
+          #
+          ++ mkRpiModules variant
+          ++ [
             #
             # === uConsole-Specific Modules ===
             # Our custom modules for the ClockworkPi uConsole hardware
             #
             self.nixosModules.kernel # Kernel patches for display, power, etc.
             self.nixosModules.configtxt # Raspberry Pi boot configuration
-            self.nixosModules.cm4 # CM4-specific kernel parameters
+            self.nixosModules.cm # Compute module kernel parameters
             self.nixosModules.base # Good defaults (NetworkManager, SSH, etc.)
             self.nixosModules.uc-sleep # Power button sleep/wake handling
             self.nixosModules.uc-4g # Optional 4G module (enable with hardware.uc-4g.enable)
@@ -116,10 +137,10 @@
                 # These settings control how the bootable SD image is created
                 #
 
-                # Image name: nixos-uconsole-cm4.img
+                # Image name includes variant: nixos-uconsole-cm4.img or nixos-uconsole-cm5.img
                 # mkOverride 40 = priority 40 (lower = higher priority)
                 # This beats mkForce (50) in case nixos-raspberrypi sets its own name
-                image.baseName = lib.mkOverride 40 "nixos-uconsole-cm4";
+                image.baseName = lib.mkOverride 40 "nixos-uconsole-${variant}";
 
                 sdImage = {
                   # Boot partition size in MB (holds kernel, DTBs, firmware)
@@ -159,9 +180,10 @@
         };
 
       # Helper function for users to create their own uConsole configurations
-      # Usage: nixos-uconsole.lib.mkUConsoleSystem { modules = [ ./configuration.nix ]; }
+      # Usage: nixos-uconsole.lib.mkUConsoleSystem { variant = "cm4"; modules = [ ./configuration.nix ]; }
       mkUConsoleSystem =
         {
+          variant ? "cm4",
           modules ? [ ],
           specialArgs ? { },
         }:
@@ -169,51 +191,52 @@
           specialArgs = {
             inherit inputs;
             nixos-raspberrypi = nixos-raspberrypi;
-          }
-          // specialArgs;
-          modules = [
-            # Raspberry Pi hardware support
-            nixos-raspberrypi.nixosModules.raspberry-pi-4.base
-            nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
+          } // specialArgs // {
+            # isCM4 must not be overridden - it's derived from variant
+            isCM4 = variant == "cm4";
+          };
+          modules =
+            mkRpiModules variant
+            ++ [
+              # uConsole hardware support
+              self.nixosModules.kernel
+              self.nixosModules.configtxt
+              self.nixosModules.cm
+              self.nixosModules.base
+              self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
 
-            # uConsole hardware support
-            self.nixosModules.kernel
-            self.nixosModules.configtxt
-            self.nixosModules.cm4
-            self.nixosModules.uc-sleep
-            self.nixosModules.uc-4g
-
-            # Compatibility fixes
-            (
-              { lib, modulesPath, ... }:
-              {
-                disabledModules = [ (modulesPath + "/rename.nix") ];
-                imports = [
-                  (lib.mkAliasOptionModule [ "environment" "checkConfigurationOptions" ] [ "_module" "check" ])
-                ];
-                nixpkgs.hostPlatform = "aarch64-linux";
-                boot.loader.raspberryPi.bootloader = "kernel";
-
-                # Filesystem configuration for SD card
-                fileSystems."/" = lib.mkDefault {
-                  device = "/dev/disk/by-label/NIXOS_SD";
-                  fsType = "ext4";
-                };
-
-                # Override nixpkgs sd-image.nix which hardcodes noauto/nofail
-                # We need automount for nixos-raspberrypi's generational bootloader
-                fileSystems."/boot/firmware" = {
-                  device = lib.mkDefault "/dev/disk/by-label/FIRMWARE";
-                  fsType = lib.mkDefault "vfat";
-                  options = lib.mkForce [
-                    "fmask=0022"
-                    "dmask=0022"
+              # Compatibility fixes
+              (
+                { lib, modulesPath, ... }:
+                {
+                  disabledModules = [ (modulesPath + "/rename.nix") ];
+                  imports = [
+                    (lib.mkAliasOptionModule [ "environment" "checkConfigurationOptions" ] [ "_module" "check" ])
                   ];
-                };
-              }
-            )
-          ]
-          ++ modules;
+                  nixpkgs.hostPlatform = "aarch64-linux";
+                  boot.loader.raspberryPi.bootloader = "kernel";
+
+                  # Filesystem configuration for SD card
+                  fileSystems."/" = lib.mkDefault {
+                    device = "/dev/disk/by-label/NIXOS_SD";
+                    fsType = "ext4";
+                  };
+
+                  # Override nixpkgs sd-image.nix which hardcodes noauto/nofail
+                  # We need automount for nixos-raspberrypi's generational bootloader
+                  fileSystems."/boot/firmware" = {
+                    device = lib.mkDefault "/dev/disk/by-label/FIRMWARE";
+                    fsType = lib.mkDefault "vfat";
+                    options = lib.mkForce [
+                      "fmask=0022"
+                      "dmask=0022"
+                    ];
+                  };
+                }
+              )
+            ]
+            ++ modules;
         };
 
     in
@@ -232,21 +255,41 @@
       nixosModules = {
         kernel = import ./modules/kernel.nix;
         configtxt = import ./modules/configtxt.nix;
-        cm4 = import ./modules/cm4.nix;
+        cm = import ./modules/cm.nix;
         base = import ./modules/base.nix;
         uc-sleep = import ./modules/uc-sleep.nix;
         uc-4g = import ./modules/uc-4g.nix;
 
-        # All-in-one: imports all uConsole CM4 modules
+        # All-in-one: imports all uConsole modules (use with appropriate rpi base)
         uconsole-cm4 =
-          { ... }:
+          { lib, ... }:
           {
             imports = [
               self.nixosModules.kernel
               self.nixosModules.configtxt
-              self.nixosModules.cm4
+              (import ./modules/cm.nix {
+                inherit lib;
+                isCM4 = true;
+              })
               self.nixosModules.base
               self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
+            ];
+          };
+
+        uconsole-cm5 =
+          { lib, ... }:
+          {
+            imports = [
+              self.nixosModules.kernel
+              self.nixosModules.configtxt
+              (import ./modules/cm.nix {
+                inherit lib;
+                isCM4 = false;
+              })
+              self.nixosModules.base
+              self.nixosModules.uc-sleep
+              self.nixosModules.uc-4g
             ];
           };
       };
@@ -281,13 +324,27 @@
 
       #
       # === Pre-built Images ===
-      # Build with: nix build .#minimal
+      # Build with: nix build .#minimal-cm4 or nix build .#minimal-cm5
       #
-      packages.aarch64-linux = {
-        minimal =
+      packages.aarch64-linux = rec {
+        minimal-cm4 =
           (mkUConsoleImage {
+            variant = "cm4";
             modules = [ ./images/minimal.nix ];
           }).config.system.build.sdImage;
+
+        minimal-cm5 =
+          (mkUConsoleImage {
+            variant = "cm5";
+            modules = [ ./images/minimal.nix ];
+          }).config.system.build.sdImage;
+
+        # Deprecated: use minimal-cm4 instead
+        minimal =
+          let
+            msg = "nixos-uconsole: '.#minimal' is deprecated, use '.#minimal-cm4' instead";
+          in
+          nixpkgs.lib.warn msg minimal-cm4;
       };
 
       #
@@ -296,6 +353,12 @@
       #
       nixosConfigurations = {
         uconsole-cm4-minimal = mkUConsoleImage {
+          variant = "cm4";
+          modules = [ ./images/minimal.nix ];
+        };
+
+        uconsole-cm5-minimal = mkUConsoleImage {
+          variant = "cm5";
           modules = [ ./images/minimal.nix ];
         };
       };

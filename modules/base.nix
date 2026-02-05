@@ -3,12 +3,7 @@
 # Sensible defaults for a usable uConsole system.
 # Services are enabled and auto-start so the system is ready immediately after flashing.
 
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 {
   #
   # === Networking ===

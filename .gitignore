@@ -8,3 +8,6 @@ result-*
 .devenv
 nixos*.img.zst
 build.log
+
+# Neovim DX plugin
+*.otter.*
