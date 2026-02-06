@@ -13,7 +13,7 @@ in
 python3.pkgs.buildPythonApplication {
   pname = "uc-sleep";
   version = "0-unstable-20251215";
-  format = "other";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "robertjakub";
@@ -22,10 +22,7 @@ python3.pkgs.buildPythonApplication {
     hash = "sha256-zJzKKENLPsgun7zGSpNLy6LPcdO55F/XeLDbAxxZpD0=";
   };
   build-system = with python3.pkgs; [setuptools];
-  #propagatedBuildInputs = with python3.pkgs; [
-  #  python-uinput
-  #  inotify-simple
-  #];
+
   preBuild = ''
     touch src/__init__.py
     cat >> src/sleep_power_control.py << EOF
