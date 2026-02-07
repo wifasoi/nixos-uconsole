@@ -4,12 +4,6 @@
   fetchFromGitHub,
   ...
 }:
-let
-  python = python3.withPackages (ps: [
-    ps.python-uinput
-    ps.inotify-simple
-  ]);
-in
 python3.pkgs.buildPythonApplication {
   pname = "uc-sleep";
   version = "0-unstable-20251215";
@@ -22,6 +16,11 @@ python3.pkgs.buildPythonApplication {
     hash = "sha256-zJzKKENLPsgun7zGSpNLy6LPcdO55F/XeLDbAxxZpD0=";
   };
   build-system = with python3.pkgs; [setuptools];
+
+  propagatedBuildInputs = with python3.pkgs; [
+    python-uinput
+    inotify-simple
+  ];
 
   preBuild = ''
     touch src/__init__.py
@@ -36,11 +35,17 @@ def main():
 
 EOF
     cat > pyproject.toml << EOF
+[project]
+name = "uc-sleep"
+version = "0.1.0"
+dependencies = [
+  "python-uinput",
+  "inotify-simple",
+]
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-
-  dontBuild = true;
 
 [project.scripts]
 sleep_power_control = "sleep_power_control:main"
